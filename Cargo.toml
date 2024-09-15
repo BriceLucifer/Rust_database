@@ -1,0 +1,8 @@
+[package]
+name = "Rust_database"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cfonts = "1.2.0"
+colored = "2.1.0"
