@@ -45,10 +45,19 @@ impl InputBuffer {
 
         Ok(())
     }
+
+    // for dot command
+    fn do_meta_command(&self) -> MetaCommandResult {
+        if self.buffer == ".exit".to_string() {
+            exit(0);
+        } else {
+            return MetaCommandResult::MetaCommandUnrecognizedCommand;
+        }
+    }
 }
 
 fn print_promt() {
-    print!("{}","🌌>> ".bright_purple());
+    print!("{}", "🌌>> ".bright_purple());
 }
 
 fn tui() {
@@ -65,7 +74,7 @@ fn tui() {
     say(tui.options);
 }
 
-enum MetaCommandResult{
+enum MetaCommandResult {
     MetaCommandSuccess,
     MetaCommandUnrecognizedCommand,
 }
@@ -73,6 +82,39 @@ enum MetaCommandResult{
 enum PrepareResult {
     PrepareSuccess,
     PrepareUnrecognizedCommand,
+}
+
+fn prepare_statement(input_buffer: &InputBuffer, statement: &mut Statement) -> PrepareResult {
+    if input_buffer.buffer.get(0..6).unwrap() == "insert" {
+        statement.type_t = StatementType::StatementInsert;
+        return PrepareResult::PrepareSuccess;
+    }
+    if input_buffer.buffer == "select" {
+        statement.type_t = StatementType::StatementSelect;
+        return PrepareResult::PrepareSuccess;
+    }
+
+    return PrepareResult::PrepareUnrecognizedCommand;
+}
+
+enum StatementType {
+    StatementInsert,
+    StatementSelect,
+}
+
+struct Statement {
+    type_t: StatementType,
+}
+
+fn execute_statement(statement: &Statement) {
+    match statement.type_t {
+        StatementType::StatementInsert => {
+            println!("{}", "This is where we would do an insert".bright_green())
+        }
+        StatementType::StatementSelect => {
+            println!("{}", "This is where we world do a select".bright_green())
+        }
+    }
 }
 
 fn main() {
