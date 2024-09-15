@@ -85,7 +85,7 @@ enum PrepareResult {
 }
 
 fn prepare_statement(input_buffer: &InputBuffer, statement: &mut Statement) -> PrepareResult {
-    if input_buffer.buffer.get(0..6).unwrap() == "insert" {
+    if &input_buffer.buffer[0..6] == "insert" {
         statement.type_t = StatementType::StatementInsert;
         return PrepareResult::PrepareSuccess;
     }
@@ -104,6 +104,8 @@ enum StatementType {
 
 struct Statement {
     type_t: StatementType,
+    // update
+    // row_to_insert: Row,
 }
 
 fn execute_statement(statement: &Statement) {
@@ -112,9 +114,15 @@ fn execute_statement(statement: &Statement) {
             println!("{}", "This is where we would do an insert".bright_green())
         }
         StatementType::StatementSelect => {
-            println!("{}", "This is where we world do a select".bright_green())
+            println!("{}", "This is where we would do a select".bright_green())
         }
     }
+}
+
+struct Row{
+    id:i32,
+    username:String,
+    email:String,
 }
 
 fn main() {
@@ -125,10 +133,27 @@ fn main() {
         print_promt();
         input_buffer.read_input().unwrap();
 
-        if input_buffer.buffer == ".exit".to_string() {
-            exit(0);
-        } else {
-            println!("Unrecognized command {}.", input_buffer.buffer.red());
+        // update
+        if input_buffer.buffer.chars().nth(0) == Some('.'){
+            match input_buffer.do_meta_command() {
+                MetaCommandResult::MetaCommandSuccess => {},
+                MetaCommandResult::MetaCommandUnrecognizedCommand => {
+                    println!("{} {}","unrecognized command:".yellow(),input_buffer.buffer.bright_red());
+                }
+            }
+        }
+
+        // default iselect
+        let mut statement:Statement = Statement { type_t: StatementType::StatementSelect};
+        match prepare_statement(&input_buffer, &mut statement) {
+            PrepareResult::PrepareSuccess => {
+                execute_statement(&statement);
+                println!("{}","Executed.".cyan());
+            },
+            PrepareResult::PrepareUnrecognizedCommand => {
+                println!("{} {}","unrecognized command:".yellow(),input_buffer.buffer.bright_red());
+                continue;
+            }
         }
     }
 }
