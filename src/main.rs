@@ -6,7 +6,7 @@ use std::{
 use cfonts::{render, say, Options};
 use colored::Colorize;
 
-// InputBuffer 结构体
+// InputBuffer structure
 struct InputBuffer {
     buffer: String,
     buffer_length: usize,
@@ -134,9 +134,19 @@ fn serialize_row(row: &Row) -> Vec<u8> {
 // Deserialize a row from a fixed-size byte array
 fn deserialize_row(data: &[u8]) -> Row {
     let id = i32::from_le_bytes(data[0..4].try_into().unwrap());
-    let username = String::from_utf8(data[4..24].to_vec()).unwrap().trim_end_matches('\0').to_string();
-    let email = String::from_utf8(data[24..48].to_vec()).unwrap().trim_end_matches('\0').to_string();
-    Row { id, username, email }
+    let username = String::from_utf8(data[4..24].to_vec())
+        .unwrap()
+        .trim_end_matches('\0')
+        .to_string();
+    let email = String::from_utf8(data[24..48].to_vec())
+        .unwrap()
+        .trim_end_matches('\0')
+        .to_string();
+    Row {
+        id,
+        username,
+        email,
+    }
 }
 
 // Prepare execute for next operation
@@ -237,7 +247,10 @@ fn main() {
                     );
                 }
                 PrepareResult::PrepareSyntaxError => {
-                    println!("{}", "Syntax Error! Could not parse statement.".bright_red());
+                    println!(
+                        "{}",
+                        "Syntax Error! Could not parse statement.".bright_red()
+                    );
                 }
             }
         }
