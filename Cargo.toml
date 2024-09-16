@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 cfonts = "1.2.0"
 colored = "2.1.0"
+tabled = "0.16.0"
