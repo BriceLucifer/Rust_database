@@ -66,6 +66,7 @@ pub struct Table {
     pages: Vec<Option<Vec<u8>>>,
 }
 
+
 impl Table {
     pub fn new() -> Self {
         Self {
@@ -154,18 +155,38 @@ enum PrepareResult {
     PrepareSuccess,
     PrepareUnrecognizedCommand,
     PrepareSyntaxError,
+    PrepareNegativeID,
+    PrepareStringTooLong,
 }
+
 
 fn prepare_statement(input_buffer: &InputBuffer, statement: &mut Statement) -> PrepareResult {
     if input_buffer.buffer.starts_with("insert") {
         statement.type_t = StatementType::StatementInsert;
         let args: Vec<&str> = input_buffer.buffer.split_whitespace().collect();
+        
         if args.len() < 4 {
             return PrepareResult::PrepareSyntaxError;
         }
-        statement.row_to_insert.id = args[1].parse().unwrap();
+        
+        // 解析ID
+        statement.row_to_insert.id = match args[1].parse() {
+            Ok(id) if id >= 0 => id,
+            Ok(_) => return PrepareResult::PrepareNegativeID,
+            Err(_) => return PrepareResult::PrepareSyntaxError,
+        };
+        
         statement.row_to_insert.username = args[2].to_string();
         statement.row_to_insert.email = args[3].to_string();
+
+        // 检查用户名和邮箱的长度
+        if statement.row_to_insert.username.len() > 20 {
+            return PrepareResult::PrepareStringTooLong;
+        }
+        if statement.row_to_insert.email.len() > 30 {
+            return PrepareResult::PrepareStringTooLong;
+        }
+
         PrepareResult::PrepareSuccess
     } else if input_buffer.buffer == "select" {
         statement.type_t = StatementType::StatementSelect;
@@ -174,6 +195,7 @@ fn prepare_statement(input_buffer: &InputBuffer, statement: &mut Statement) -> P
         PrepareResult::PrepareUnrecognizedCommand
     }
 }
+
 
 enum StatementType {
     StatementInsert,
@@ -240,17 +262,16 @@ fn main() {
                     statement.execute_statement(&mut table);
                 }
                 PrepareResult::PrepareUnrecognizedCommand => {
-                    println!(
-                        "{} {}",
-                        "Unrecognized command:".yellow(),
-                        input_buffer.buffer.bright_red()
-                    );
+                    println!("{} {}", "Unrecognized command:".yellow(), input_buffer.buffer.bright_red());
                 }
                 PrepareResult::PrepareSyntaxError => {
-                    println!(
-                        "{}",
-                        "Syntax Error! Could not parse statement.".bright_red()
-                    );
+                    println!("{}", "Syntax Error! Could not parse statement.".bright_red());
+                }
+                PrepareResult::PrepareNegativeID => {
+                    println!("{}", "Error: ID must be a positive integer.".bright_red());
+                }
+                PrepareResult::PrepareStringTooLong => {
+                    println!("{}", "Error: String is too long.".bright_red());
                 }
             }
         }
@@ -258,7 +279,7 @@ fn main() {
 }
 
 fn print_prompt() {
-    print!("{} ", "👉 Enter command:".bold().blue());
+    print!("{} ", "db >".bold().blue());
     io::stdout().flush().unwrap();
 }
 
